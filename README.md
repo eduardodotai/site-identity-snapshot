@@ -1,150 +1,222 @@
-# site-identity-snapshot
+<div align="center">
 
-A Claude Code skill that captures the complete visual identity of any public website into a structured reference folder — perfect for **rebranding**, **competitive analysis**, or **design system extraction**.
+![Site Identity Snapshot](assets/cover.png)
 
-## What it does
+# Site Identity Snapshot
 
-Given a URL, produces a self-contained reference folder with:
+**Captura a identidade visual completa de qualquer site público numa pasta de referência estruturada.**
 
-- **All static assets** — HTML, CSS, JS, images, fonts (downloaded via `curl`)
-- **Screenshots** — desktop + mobile, full-page + viewport + key sections (via Chrome DevTools MCP)
-- **Design tokens (JSON)** — colors, typography, spacing, radii, shadows, transitions, keyframes, breakpoints — extracted from the live DOM
-- **Human-readable visual identity guide** — narrative covering brand tone, palette, type system, components, animations, page structure, and rebranding direction
-- **README** — methodology, folder map, and how to use the snapshot as reference
+HTML, CSS, JS, imagens, fontes, screenshots, design tokens em JSON e um guia visual narrativo — pronto pra alimentar rebrandings, análise competitiva ou extração de design system.
 
-**Scope: capture-only.** This skill does NOT implement anything in your target project. It produces reference artifacts that feed *into* implementation (in any stack: Tailwind, CSS vars, Figma, etc.).
+[![License: MIT](https://img.shields.io/badge/license-MIT-amber.svg)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-orange.svg)](https://docs.claude.com/en/docs/claude-code/skills)
+[![Chrome DevTools MCP](https://img.shields.io/badge/requires-Chrome%20DevTools%20MCP-teal.svg)](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md)
+[![PT-BR](https://img.shields.io/badge/docs-PT--BR-green.svg)](#)
 
-## Output structure
+</div>
+
+---
+
+## ⚡ O que faz
+
+Você tá começando um rebranding. Precisa entender — de verdade — a identidade visual do site atual (ou de um concorrente, ou de uma referência). Manda:
+
+```
+snapshot do site https://onprofit.com.br
+```
+
+E recebe, em uns minutos, uma pasta completa com **tudo o que define visualmente aquele site**:
+
+> _"Capturei 1.7k linhas de HTML, 2.1k linhas de CSS, 47 imagens (organizadas por uso), 8 arquivos de fonte (Standerd + Figtree), 6 screenshots e extraí 47 cores nomeadas semanticamente, 9 níveis de tipografia, 8 keyframes, 4 padrões de animação. Guia humano em `analysis/visual-identity-guide.md` (233 linhas) e tokens estruturados em `analysis/design-tokens.json` (186 linhas), prontos pra Tailwind/Figma."_
+
+Não é "scrape e pronto". É **scrape + análise estruturada + guia narrativo**, com tokens já agrupados por papel semântico.
+
+## 📦 O que entra na pasta
 
 ```
 <DEST>/
-├── README.md                       ← snapshot documentation + how to use
+├── README.md                       ← documenta o snapshot
 ├── analysis/
-│   ├── visual-identity-guide.md    ← human-readable guide
-│   └── design-tokens.json          ← structured tokens
+│   ├── visual-identity-guide.md    ← guia humano (marca, paleta, type, anims, componentes, rebranding)
+│   └── design-tokens.json          ← tokens estruturados (cores, type, radii, shadows, motion, breakpoints)
 ├── html/index.html
-├── css/                            ← all linked stylesheets
-├── js/                             ← site's own scripts only (no analytics/chat)
-├── images/                         ← organized by use (landing/, graphics/, icons/)
-├── fonts/                          ← @font-face self-hosted, grouped by family
+├── css/                            ← todos os .css linkados
+├── js/                             ← scripts próprios apenas (sem GTM/Crisp/Analytics)
+├── images/                         ← organizadas por uso (landing/, graphics/, icons/)
+├── fonts/                          ← @font-face self-hosted, por família
 └── screenshots/
-    ├── desktop-fullpage.png
-    ├── desktop-hero.png
-    ├── mobile-fullpage.png
-    ├── mobile-hero.png
-    └── section-*.png
+    ├── desktop-fullpage.png        ← 1440px, página inteira
+    ├── desktop-hero.png            ← 1440x900 viewport
+    ├── mobile-fullpage.png         ← 390px, página inteira
+    ├── mobile-hero.png             ← 390x844 viewport
+    └── section-*.png               ← seções-chave (hero, footer, blocos distintivos)
 ```
 
-## Installation
+## 🎯 Por que vale a pena
+
+Captura de identidade visual costuma cair em dois extremos:
+
+❌ **"Screenshot e copia o CSS"** — você fica com um amontoado de arquivos sem hierarquia, sem entender o que define a marca  
+❌ **Ferramenta de extração de tokens automática** — cospe 200 cores sem distinguir `primary_accent` de `border_subtle_alpha`
+
+**Aqui é diferente.** Cada artefato vem com:
+
+- 🎨 **Tokens nomeados semanticamente** — `neon_green`, `deep_teal`, `text_muted` (não `color_47`)
+- 📐 **Agrupados por papel** — primárias / escuras / neutras / bordas, não por valor hex
+- 📖 **Guia narrativo** — explica *por que* a paleta é assim, *quando* usar cada token, *o que* define a personalidade visual da marca
+- 🎬 **Animações categorizadas** — distingue CSS `@keyframes` de JS (`IntersectionObserver`, `requestAnimationFrame`)
+- 🚀 **Cheat-sheet de rebranding** — direção acionável: o que preservar vs. o que conscientemente quebrar
+
+## 🛠 Como funciona (5 fases)
+
+| # | Fase | O que faz | Ferramenta |
+|---|------|-----------|------------|
+| 1 | **Recon** | Mapeia todos os assets (CSS, JS, imagens, fontes), classifica próprio vs. terceiro | Chrome DevTools MCP |
+| 2 | **Download** | `curl` em todos os assets próprios, organizados por tipo e uso | `curl` |
+| 3 | **Screenshots** | Desktop + mobile, full-page + viewport + seções-chave | Chrome DevTools MCP |
+| 4 | **Token Extraction** | JS injetado via `evaluate_script` extrai computed styles, `@keyframes`, breakpoints do DOM vivo | Chrome DevTools MCP |
+| 5 | **Documentation** | Gera `design-tokens.json`, `visual-identity-guide.md`, `README.md` | Write |
+
+## 📊 Caso de uso real
+
+Esta skill nasceu de um caso real: o rebranding do produto **manager-onprofit** (Core Studio). Antes de tocar uma linha do novo design, precisávamos congelar fielmente a identidade do site atual ([onprofit.com.br](https://onprofit.com.br)).
+
+**O que a captura entregou em ~10 minutos:**
+
+| Artefato | Tamanho |
+|----------|---------|
+| HTML clonado | 1.7k linhas |
+| CSS clonado | 2.1k linhas (`landing.css`) |
+| Imagens organizadas | 47 arquivos em `landing/`, `graphics/`, etc. |
+| Fontes self-hosted | Standerd (5 pesos OTF) + Figtree (3 pesos woff2/woff) |
+| Screenshots | 6 (desktop/mobile fullpage + hero + section-hero + section-footer) |
+| `design-tokens.json` | 186 linhas, 47 cores semanticamente agrupadas |
+| `visual-identity-guide.md` | 233 linhas, 11 seções narrativas |
+
+**Achados que viraram decisões de rebrand:**
+
+| Padrão capturado | Decisão informada |
+|------------------|-------------------|
+| Acento neon `#50FFB1` aparece em 11+ classes | "É a assinatura — trocar muda a marca inteira" |
+| Pills (radius 3rem) em **todos** os botões | "Decidir explicitamente se mantém ou vai pra radius-md" |
+| Standerd OTF + Lato Google Fonts + Figtree Bunny | "3 famílias é excesso, consolidar em 2 no rebrand" |
+| Carrossel infinito (15s linear) em integrações | "Cadência de 0.6s nos fades é o 'movimento' da marca" |
+| Layout 50/50 alternando bg branco/cinza | "Espinha dorsal — fácil de portar, só atenção aos mockups" |
+
+Sem a skill, levaria 2-3 horas pra extrair manualmente. E provavelmente perderia metade dos detalhes.
+
+## 🚀 Como instalar
+
+### Opção 1 — Pessoal
 
 ```bash
 git clone https://github.com/eduardodotai/site-identity-snapshot.git ~/.claude/skills/site-identity-snapshot
 ```
 
-## Requirements
+Reinicia o Claude Code (ou `/reload`). Pronto.
 
-- [Claude Code](https://claude.ai/code) CLI or IDE extension
-- [Chrome DevTools MCP](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md) plugin enabled — **required** for screenshots and live token extraction
-- `curl` available in shell
+### Opção 2 — Time / projeto compartilhado
 
-## Usage
+Adiciona como submódulo dentro do projeto:
 
 ```bash
-# Basic — defaults to reference/<domain>/
+cd seu-projeto
+git submodule add https://github.com/eduardodotai/site-identity-snapshot.git .claude/skills/site-identity-snapshot
+```
+
+Quem rodar Claude Code dentro do repo já tem a skill automaticamente.
+
+### Opção 3 — Download direto
+
+Vai em [Releases](https://github.com/eduardodotai/site-identity-snapshot/releases), baixa o ZIP, extrai pra `~/.claude/skills/site-identity-snapshot/`.
+
+## 📋 Requisitos
+
+- [Claude Code](https://claude.ai/code) CLI ou extensão IDE
+- [Chrome DevTools MCP](https://github.com/anthropics/claude-code/blob/main/docs/mcp.md) habilitado — **obrigatório** (screenshots + extração de tokens do DOM vivo)
+- `curl` disponível no shell
+
+## 🎮 Como usar
+
+Depois de instalado, dentro do Claude Code:
+
+```bash
+# Captura básica — salva em reference/<dominio>/
 snapshot do site https://example.com
 
-# In English
+# Em inglês
 capture the visual identity of https://competitor.com
 
-# With custom destination
+# Com destino customizado
 extrair design tokens de https://startup.io para reference/inspiration/
 
-# Multiple triggers
+# Outras triggers que funcionam
 referência visual de https://brand.com para o rebranding
-design scraper de https://landing.page
+scraper de design de https://landing.page
+clonar visual de https://site.com para reference
 ```
 
-## How it works
+**Bônus:** a skill auto-dispara quando você menciona termos como _"snapshot do site"_, _"identidade visual de"_, _"extrair design tokens"_, _"referência visual"_, _"scraper de design"_. Não precisa decorar comando.
 
-5 sequential phases:
+## 🧪 O que é capturado vs. ignorado
 
-| Phase | What it does | Tooling |
-|-------|--------------|---------|
-| **1. Reconnaissance** | Maps all assets (CSS, JS, images, fonts), classifies own vs third-party | Chrome DevTools MCP |
-| **2. Download** | `curl` all own assets, organized by type and use | `curl` |
-| **3. Screenshots** | Desktop + mobile, full-page + viewport + key sections | Chrome DevTools MCP |
-| **4. Token Extraction** | JS injected via `evaluate_script` extracts computed styles, `@keyframes`, breakpoints from the live DOM | Chrome DevTools MCP |
-| **5. Documentation** | Generates `design-tokens.json`, `visual-identity-guide.md`, `README.md` | Write |
+**Capturado:**
+- HTML da página principal
+- Todos os CSS linkados (incluindo @font-face stylesheets)
+- JS próprio do site
+- Imagens (organizadas por uso)
+- Fontes self-hosted (`.woff2`, `.woff`, `.otf`, `.ttf`)
+- Fontes de CDN (Google Fonts, Bunny Fonts, etc.)
 
-## What's captured vs skipped
-
-**Captured:**
-- HTML (main page)
-- All linked CSS files (including @font-face stylesheets)
-- Site's own JS files
-- Images (organized by use)
-- Self-hosted fonts (`.woff2`, `.woff`, `.otf`, `.ttf`)
-- Font CDN files (Google Fonts, Bunny Fonts, etc.)
-
-**Skipped (referenced in README only):**
-- Analytics & tracking (GTM, GA4, Segment, Mixpanel)
+**Ignorado** (referenciado apenas no README):
+- Analytics & tags (GTM, GA4, Segment, Mixpanel)
 - Chat widgets (Crisp, Intercom, Drift, Zendesk)
-- A/B testing (Optimizely, VWO)
-- Video players (YouTube embeds, Vimeo, Wistia)
-- Cloudflare protection scripts
-- Cookie consent
+- A/B testing (Optimizely, VWO, Google Optimize)
+- Players de vídeo (YouTube embeds, Vimeo, Wistia, Converte AI)
+- Scripts de proteção Cloudflare
+- Cookie consent (OneTrust, Cookiebot)
 
-## Design tokens structure
+## 🎁 Edge cases já cobertos
 
-The generated `analysis/design-tokens.json` follows this schema:
+- **SPAs (React/Vue/Angular)** — aguarda hidratação antes da extração
+- **Cloudflare protection** — lida com email obfuscation e challenge pages
+- **CSS Custom Properties** — extrai variáveis `:root` com valores resolvidos
+- **Dark mode** — captura tema default, anota o toggle se existir
+- **Renderização JS-heavy** — fallback pra `outerHTML` se o HTML estático vier vazio
+- **Páginas muito longas** — section screenshots além do full-page
 
-```json
-{
-  "_meta": { "source", "captured_at", "method", "purpose" },
-  "brand": { "name", "tagline", "tone", "stack_observada" },
-  "colors": { "primary": {}, "dark": {}, "neutral": {}, "borders": {} },
-  "typography": { "primary_display": {}, "secondary_body": {}, "scale_observada": {} },
-  "spacing": { "unidade", "max_width", "section_padding_*", "gap_componentes" },
-  "radii": {},
-  "shadows": {},
-  "transitions": {},
-  "animations": {},
-  "breakpoints": {},
-  "naming_convention": {}
-}
-```
+## 🤝 Contribuindo
 
-Colors are grouped by **semantic role** (not raw value), tokens have **semantic names** (`neon_green`, `deep_teal`, `text_muted`), and animations distinguish CSS `@keyframes` from JS-driven (IntersectionObserver, requestAnimationFrame).
+Achou um site que a skill não capturou direito? Manda PR.
 
-## Visual guide structure
+Os arquivos são markdown puro — nada de compilar, instalar dependência, configurar build. Edita, salva, abre PR.
 
-The generated `analysis/visual-identity-guide.md` covers, in order:
+Se você usar a skill em algum projeto e tiver feedback (cobertura de edge case, sugestão de campo novo no JSON), abre uma issue contando — ajuda a calibrar a próxima versão.
 
-1. Positioning & tone
-2. Color palette (grouped by role)
-3. Typography (families + scale)
-4. Spacing & grid
-5. Component tokens & patterns (buttons, badges, cards, nav, footer, modals, accordions)
-6. Animations & micro-interactions
-7. Page structure (top-to-bottom)
-8. CSS naming convention
-9. Stack & integrations observed
-10. File inventory
-11. Rebranding direction (actionable cheat-sheet)
+## 🔗 Skills relacionadas
 
-## Edge cases handled
+Se você curtiu essa, dá uma olhada também em:
 
-- **SPAs (React/Vue/Angular)** — waits for hydration before extraction
-- **Cloudflare protection** — handles email obfuscation, challenge pages
-- **CSS Custom Properties** — extracts `:root` variables with resolved values
-- **Dark mode** — captures default theme, notes toggle if present
-- **JS-heavy rendering** — falls back to `outerHTML` if static HTML is empty
-- **Long pages** — captures section screenshots in addition to full-page
+- 🎨 [**patterns-audit**](https://github.com/eduardodotai/patterns-audit) — Audit multi-agent de SOLID/DRY/GoF/code smells, score 0-100
+- 📐 [**spec-driven-advanced**](https://github.com/eduardodotai/spec-driven-advanced) — Workflow SDD+RPI completo (Constitution → Research → Spec → Plan → Implement → Verify → Ship)
+- 🎬 [**roteiros-virais**](https://github.com/eduardodotai/roteiros-virais) — Framework de roteiros virais PT-BR pra Reels/TikTok/Shorts
 
-## Example output
+## 📜 Licença
 
-See [the OnProfit reference snapshot](https://github.com/eduardodotai/site-identity-snapshot/tree/main/examples) (coming soon) for what a complete output looks like — built from `https://onprofit.com.br/`, 233-line visual guide, 186-line design-tokens.json.
+[MIT](./LICENSE) — pode usar comercial, modificar, redistribuir. Só mantém o crédito.
 
-## License
+## 🙏 Créditos
 
-MIT
+- **Anthropic Agent Skills standard**: [docs.claude.com](https://docs.claude.com/en/docs/claude-code/skills)
+- **Chrome DevTools MCP**: integração que viabilizou a extração de tokens do DOM vivo
+- **Empacotador**: [@eduardodotai](https://github.com/eduardodotai) — battle-tested no rebranding do [manager-onprofit](https://onprofit.com.br) (Core Studio)
+
+---
+
+<div align="center">
+
+**Se essa skill economizar 2 horas do seu próximo rebranding, dá uma ⭐ no repo.**
+
+[Reportar bug](https://github.com/eduardodotai/site-identity-snapshot/issues) · [Sugerir feature](https://github.com/eduardodotai/site-identity-snapshot/issues) · [Ver no GitHub](https://github.com/eduardodotai/site-identity-snapshot)
+
+</div>
